@@ -32,6 +32,29 @@ num_expected_dm_stories = 219506
 VOCAB_SIZE = 200000
 CHUNK_SIZE = 1000 # num examples per chunk, for the chunked data
 
+'''以下是我添加的'''
+stop_words = open('data/stop_words.txt').read().strip().split('\n')
+stop_words.append('<s>')
+stop_words.append('</s>')
+stop_words.append(',')
+stop_words.append('.')
+stop_words.append('')
+stop_words.append(' ')
+vocab_words = open('data/vocab').read().strip().split('\n')
+vocab_words = [vocab.split(' ')[0] for vocab in vocab_words]
+def extract_keywords(article, abstract):
+    original_words = original_text.split(' ')
+    original_words = set(original_words)
+    abstract_words = abstract.split(' ')
+    keywords = []
+    for word in abstract_words:
+        if word in original_words and word not in stop_words and word in vocab_words:
+            keywords.append(word)
+    return ' '.join(keywords)
+  
+'''以上是我添加的'''
+
+
 
 def chunk_file(set_name):
   in_file = 'finished_files/%s.bin' % set_name
@@ -145,7 +168,7 @@ def get_art_abs(story_file):
   abstract = ' '.join(["%s %s %s" % (SENTENCE_START, sent, SENTENCE_END) for sent in highlights])
 
   return article, abstract
-
+  
 
 def write_to_bin(url_file, out_file, makevocab=False):
   """Reads the tokenized .story files corresponding to the urls listed in the url_file and writes them to a out_file."""
@@ -178,11 +201,13 @@ def write_to_bin(url_file, out_file, makevocab=False):
 
       # Get the strings to write to .bin file
       article, abstract = get_art_abs(story_file)
+      keywords = extract_keywords(article, abstract)
 
       # Write to tf.Example
       tf_example = example_pb2.Example()
       tf_example.features.feature['article'].bytes_list.value.extend([article])
       tf_example.features.feature['abstract'].bytes_list.value.extend([abstract])
+      tf_example.features.feature['keywords'].bytes_list.value.extend([keywords])
       tf_example_str = tf_example.SerializeToString()
       str_len = len(tf_example_str)
       writer.write(struct.pack('q', str_len))
