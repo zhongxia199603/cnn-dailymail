@@ -178,11 +178,13 @@ def write_to_bin(url_file, out_file, makevocab=False):
 
       # Get the strings to write to .bin file
       article, abstract = get_art_abs(story_file)
+      keywords = extract_keywords(article, abstract)
 
       # Write to tf.Example
       tf_example = example_pb2.Example()
       tf_example.features.feature['article'].bytes_list.value.extend([article])
       tf_example.features.feature['abstract'].bytes_list.value.extend([abstract])
+      tf_example.features.feature['keywords'].bytes_list.value.extend([keywords])
       tf_example_str = tf_example.SerializeToString()
       str_len = len(tf_example_str)
       writer.write(struct.pack('q', str_len))
